@@ -1,0 +1,1983 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Coran Mémorisation - KELE</title>
+    
+    <!-- Polices pour l'interface et l'écriture arabe -->
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Balises d'intégration mobile iOS (PWA) -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="KELE">
+    
+    <!-- Balise de Manifeste Dynamique -->
+    <link rel="manifest" id="pwa-manifest">
+
+    <style>
+        :root {
+            --primary-color: #064e3b;
+            --primary-light: #0f766e;
+            --accent-gold: #d97706;
+            --bg-dark: #090d16;
+            --card-bg: #111827;
+            --text-light: #f1f5f9;
+            --text-muted: #9ca3af;
+            --keyboard-bg: #1e293b;
+            --key-bg: #334155;
+            --key-action-bg: #475569;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* En-tête */
+        .header {
+            background-color: var(--primary-color);
+            border-bottom: 2px solid var(--accent-gold);
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+            z-index: 100;
+            flex-shrink: 0;
+        }
+
+        .menu-btn {
+            background-color: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            color: #fff;
+            padding: 8px 12px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .menu-btn:active {
+            background-color: rgba(255, 255, 255, 0.25);
+        }
+
+        .surah-title-container {
+            text-align: center;
+            flex-grow: 1;
+        }
+
+        .surah-title-container h1 {
+            font-size: 1rem;
+            margin: 0;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .surah-title-container p {
+            font-size: 0.75rem;
+            margin: 1px 0 0 0;
+            color: #a7f3d0;
+        }
+
+        /* Signature Kele en En-tête */
+        .header-signature {
+            background-color: var(--accent-gold);
+            color: #000;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            letter-spacing: 0.05em;
+        }
+
+        .save-indicator {
+            background-color: #10b981;
+            color: white;
+            font-size: 0.7rem;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            margin-right: 8px;
+        }
+
+        .save-indicator.visible {
+            opacity: 1;
+        }
+
+        /* Menu de sélection des sourates (Sidebar) */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: -300px;
+            width: 290px;
+            height: 100%;
+            background-color: #0c1220;
+            box-shadow: 4px 0 15px rgba(0,0,0,0.6);
+            transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1010;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar.open {
+            left: 0;
+        }
+
+        .sidebar-header {
+            padding: 15px;
+            background-color: var(--primary-color);
+            border-bottom: 1px solid var(--accent-gold);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .sidebar-header h2 {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .search-container {
+            padding: 10px;
+            background-color: #111827;
+            border-bottom: 1px solid #1f2937;
+        }
+
+        .search-container input {
+            width: 100%;
+            padding: 8px 12px;
+            background-color: #1f2937;
+            border: 1px solid #374151;
+            border-radius: 6px;
+            color: #fff;
+            font-family: inherit;
+            font-size: 0.85rem;
+        }
+
+        .search-container input:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+        }
+
+        .surah-list {
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        .surah-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            border-bottom: 1px solid #1f2937;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .surah-item:active, .surah-item.active {
+            background-color: rgba(217, 119, 6, 0.15);
+        }
+
+        .surah-item-num {
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: var(--accent-gold);
+            width: 30px;
+        }
+
+        .surah-item-info {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .surah-item-name {
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .surah-item-meta {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .surah-item-arabic {
+            font-family: 'Amiri', serif;
+            font-size: 1.1rem;
+            color: #34d399;
+            text-align: right;
+        }
+
+        /* Signature au bas de la liste des sourates */
+        .sidebar-footer {
+            padding: 12px;
+            text-align: center;
+            background-color: #090d16;
+            border-top: 1px solid #1f2937;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        
+        .sidebar-footer strong {
+            color: var(--accent-gold);
+        }
+
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(2px);
+            z-index: 1005;
+            display: none;
+        }
+
+        .sidebar-overlay.visible {
+            display: block;
+        }
+
+        /* Logo de Bienvenue de l'Application inspiré de l'image fournie */
+        .app-welcome-card {
+            background: linear-gradient(135deg, #022c22 0%, #042c1c 100%);
+            border: 2px solid var(--accent-gold);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .app-welcome-logo {
+            width: 75px;
+            height: 75px;
+            margin: 0 auto 10px auto;
+            display: block;
+        }
+
+        .app-welcome-title {
+            font-family: 'Amiri', serif;
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--accent-gold);
+            letter-spacing: 0.05em;
+            line-height: 1.2;
+        }
+
+        .app-welcome-arabic {
+            font-family: 'Amiri', serif;
+            font-size: 1.4rem;
+            color: #fff;
+            margin-bottom: 6px;
+        }
+
+        .app-welcome-subtitle {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--text-muted);
+            font-weight: 500;
+            border-top: 1px solid rgba(217, 119, 6, 0.2);
+            padding-top: 6px;
+            display: inline-block;
+        }
+
+        /* Console de Mémorisation (Boucle & Vitesse) */
+        .memo-console {
+            background-color: #111c30;
+            border: 1.5px solid var(--accent-gold);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        .memo-console-title {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--accent-gold);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .memo-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .memo-control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .memo-control-group label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .memo-input {
+            width: 100%;
+            background-color: #1f2937;
+            border: 1px solid #374151;
+            border-radius: 6px;
+            color: #fff;
+            padding: 6px 10px;
+            font-family: inherit;
+            font-size: 0.8rem;
+        }
+
+        /* Vitesse Slider */
+        .speed-control-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background-color: rgba(255,255,255,0.03);
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid #1f2937;
+        }
+
+        .speed-slider {
+            flex-grow: 1;
+            accent-color: var(--accent-gold);
+            height: 4px;
+            cursor: pointer;
+        }
+
+        .speed-val {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--accent-gold);
+            min-width: 40px;
+            text-align: right;
+        }
+
+        .memo-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-memo-start {
+            flex-grow: 2;
+            background-color: var(--primary-light);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 8px 12px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-memo-start:active {
+            background-color: var(--primary-color);
+        }
+
+        .btn-memo-stop {
+            flex-grow: 1;
+            background-color: #b91c1c;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+
+        .btn-memo-stop:active {
+            background-color: #991b1b;
+        }
+
+        /* Barre de contrôles simples d'affichage */
+        .controls-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--card-bg);
+            border: 1px solid #1f2937;
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin-bottom: 12px;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-control {
+            background-color: var(--key-bg);
+            border: none;
+            border-radius: 6px;
+            color: #fff;
+            font-family: inherit;
+            font-size: 0.75rem;
+            font-weight: 500;
+            padding: 6px 10px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-control:active {
+            background-color: var(--key-action-bg);
+        }
+
+        /* Style PWA Install Button */
+        .btn-pwa-install {
+            background-color: var(--accent-gold) !important;
+            color: #000 !important;
+            font-weight: 700;
+            display: none; /* Affiché uniquement par script si installable */
+        }
+
+        .api-badge {
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 3px 6px;
+            border-radius: 4px;
+            background-color: #374151;
+            color: var(--text-muted);
+        }
+
+        .api-badge.online {
+            background-color: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+        }
+
+        .api-badge.offline {
+            background-color: rgba(217, 119, 6, 0.15);
+            color: var(--accent-gold);
+        }
+
+        /* Zone d'écriture principale */
+        .main-content {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 12px;
+            padding-bottom: 295px; /* Espace pour éviter que le clavier masque la zone active */
+        }
+
+        .verses-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .verse-card {
+            background-color: var(--card-bg);
+            border: 1px solid #1f2937;
+            border-radius: 10px;
+            padding: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        /* Lueur dorée sur le verset actuellement lu */
+        .verse-card.playing {
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 10px rgba(217, 119, 6, 0.3);
+        }
+
+        .verse-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #1f2937;
+            padding-bottom: 6px;
+        }
+
+        .verse-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Enseigne de verset dorée */
+        .ayah-frame {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 26px;
+            height: 26px;
+            border: 1.5px solid var(--accent-gold);
+            border-radius: 50%;
+            font-size: 0.75rem;
+            color: var(--accent-gold);
+            font-weight: bold;
+            background-color: rgba(217, 119, 6, 0.1);
+        }
+
+        .verse-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn-action-small {
+            background-color: #1f2937;
+            border: 1px solid #374151;
+            border-radius: 4px;
+            color: var(--text-light);
+            padding: 4px 8px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-action-small:active {
+            background-color: #374151;
+        }
+
+        /* Boîte de référence Coran (API) */
+        .reference-box {
+            background-color: rgba(6, 78, 59, 0.15);
+            border-left: 3px solid var(--accent-gold);
+            border-radius: 6px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .reference-box.hidden {
+            display: none !important;
+        }
+
+        .ref-arabic {
+            font-family: 'Amiri', serif;
+            font-size: 1.25rem;
+            line-height: 2.2; /* Hauteur généreuse pour éviter le chevauchement des signes de pause */
+            direction: rtl;
+            text-align: right;
+            color: #34d399;
+        }
+
+        .ref-french {
+            font-size: 0.8rem;
+            line-height: 1.4;
+            color: var(--text-light);
+        }
+
+        .arabic-container, .french-container {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .input-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Textareas à auto-expansion (hauteur auto-ajustée) */
+        .arabic-input {
+            font-family: 'Amiri', serif;
+            font-size: 1.35rem;
+            line-height: 2.2; /* Laisse de l'espace pour les voyelles et signes de pause */
+            direction: rtl;
+            width: 100%;
+            min-height: 50px;
+            background-color: #1f2937;
+            color: #f3f4f6;
+            border: 1px solid #374151;
+            border-radius: 6px;
+            padding: 8px 10px;
+            resize: none;
+            box-sizing: border-box;
+            overflow-y: hidden; /* Masque les barres de défilement pour l'auto-expansion */
+        }
+
+        .arabic-input:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+            background-color: #1e293b;
+        }
+
+        .french-input {
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            direction: ltr;
+            width: 100%;
+            min-height: 45px;
+            background-color: #1f2937;
+            color: #f3f4f6;
+            border: 1px solid #374151;
+            border-radius: 6px;
+            padding: 8px 10px;
+            resize: none;
+            box-sizing: border-box;
+            overflow-y: hidden;
+        }
+
+        .french-input:focus {
+            outline: none;
+            border-color: var(--primary-light);
+            background-color: #1e293b;
+        }
+
+        .loading-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 40px 20px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: var(--accent-gold);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Note de bas de page avec Signature */
+        .footer-credits {
+            text-align: center;
+            padding: 15px 0 35px 0;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        
+        .footer-credits strong {
+            color: var(--accent-gold);
+        }
+
+        /* Conteneur de Clavier Virtuel Fixé */
+        .keyboard-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: var(--keyboard-bg);
+            padding: 4px 2px env(safe-area-inset-bottom) 2px;
+            box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .keyboard-row {
+            display: flex;
+            justify-content: center;
+            gap: 2px;
+            width: 100%;
+        }
+
+        .keyboard-key {
+            background-color: var(--key-bg);
+            color: var(--text-light);
+            border: none;
+            border-radius: 4px;
+            padding: 10px 0;
+            font-size: 0.85rem;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-grow: 1;
+            flex-basis: 0;
+            min-width: 0; /* Évite les dépassements de flexbox sur petit écran */
+            cursor: pointer;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Ajustement des touches pour l'Amiri arabe */
+        .arabic-key {
+            font-family: 'Amiri', serif;
+            font-size: 1.02rem;
+            padding: 6px 0;
+        }
+
+        .keyboard-key:active {
+            background-color: var(--key-action-bg);
+            transform: translateY(1px);
+        }
+
+        /* Touches Spéciales */
+        .key-action {
+            background-color: var(--key-action-bg) !important;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+
+        .key-space {
+            flex-grow: 3.5 !important;
+            background-color: var(--accent-gold) !important;
+            color: #000 !important;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        .key-enter {
+            background-color: var(--primary-light) !important;
+            color: #fff !important;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+
+        /* Modal Guide d'installation iOS */
+        .ios-install-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #111827;
+            border: 2px solid var(--accent-gold);
+            border-radius: 12px;
+            padding: 20px;
+            width: 85%;
+            max-width: 320px;
+            z-index: 2000;
+            display: none;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.8);
+            text-align: center;
+        }
+
+        .ios-install-modal.visible {
+            display: block;
+        }
+
+        .ios-install-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-gold);
+            margin-bottom: 12px;
+        }
+
+        .ios-install-text {
+            font-size: 0.85rem;
+            line-height: 1.5;
+            color: var(--text-light);
+            margin-bottom: 15px;
+        }
+
+        .ios-install-close {
+            background-color: var(--primary-light);
+            color: white;
+            border: none;
+            padding: 6px 15px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Barre supérieure de navigation -->
+    <div class="header">
+        <button class="menu-btn" id="menu-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+            <span>Sourates</span>
+        </button>
+        <div class="surah-title-container">
+            <h1 id="current-surah-title">Coran Mémorisation</h1>
+            <p id="current-surah-meta">Chargement...</p>
+        </div>
+        <div class="save-indicator" id="save-indicator">Enregistré</div>
+        <div class="header-signature">Kele</div>
+    </div>
+
+    <!-- Tiroir de sélection de sourates -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>Sourates du Coran</h2>
+            <button class="close-btn" id="close-sidebar-btn">&times;</button>
+        </div>
+        <div class="search-container">
+            <input type="text" id="surah-search" placeholder="Rechercher (ex: 1, Fatiha, البقرة)...">
+        </div>
+        <div class="surah-list" id="surah-list"></div>
+        <div class="sidebar-footer">
+            Coran Mémorisation par <strong>Kele</strong>
+        </div>
+    </div>
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+    <!-- Zone principale d'édition -->
+    <div class="main-content" id="main-content">
+        
+        <!-- Logo et Titre de bienvenue inspirés du design KELE -->
+        <div class="app-welcome-card">
+            <!-- Rendu SVG vectoriel de l'icône de l'application (Croissant et Coran) -->
+            <svg class="app-welcome-logo" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="256" cy="256" r="230" fill="none" stroke="#d97706" stroke-width="8"/>
+                <!-- Croissant doré de lune -->
+                <path d="M256 70 a140 140 0 1 0 140 140 A140 140 0 0 1 256 70z" fill="#d97706"/>
+                <!-- Étoile -->
+                <polygon points="256,120 262,140 280,140 265,152 270,170 256,158 242,170 247,152 232,140 250,140" fill="#d97706" />
+                <!-- Livre ouvert (Coran) -->
+                <path d="M130 360 q126 -40 252 0 L350 280 q-84 -30 -168 0z" fill="#f1f5f9" stroke="#d97706" stroke-width="4"/>
+            </svg>
+            <div class="app-welcome-title">KELE</div>
+            <div class="app-welcome-arabic">الْقُرْآن</div>
+            <div class="app-welcome-subtitle">Écrire • Mémoriser • Comprendre</div>
+        </div>
+
+        <!-- Console de Mémorisation (Boucle, Répétitions, Vitesse) -->
+        <div class="memo-console">
+            <div class="memo-console-title">
+                <span>🎧 Console de Mémorisation</span>
+                <span id="speed-indicator-badge">1.00x</span>
+            </div>
+            
+            <div class="speed-control-row">
+                <label style="font-size: 0.7rem; color: var(--text-muted); font-weight: 600; min-width: 50px;">Vitesse :</label>
+                <input type="range" class="speed-slider" id="audio-speed" min="0.5" max="4" step="0.25" value="1">
+                <span class="speed-val" id="speed-display">1.00x</span>
+            </div>
+
+            <div class="memo-grid">
+                <div class="memo-control-group">
+                    <label>Répéter chaque verset :</label>
+                    <input type="number" class="memo-input" id="loop-verse-rep" min="1" max="50" value="1">
+                </div>
+                <div class="memo-control-group">
+                    <label>Répéter l'intervalle :</label>
+                    <input type="number" class="memo-input" id="loop-range-rep" min="1" max="50" value="1">
+                </div>
+                <div class="memo-control-group">
+                    <label>Du verset :</label>
+                    <input type="number" class="memo-input" id="loop-from" min="1" value="1">
+                </div>
+                <div class="memo-control-group">
+                    <label>Au verset :</label>
+                    <input type="number" class="memo-input" id="loop-to" min="1" value="7">
+                </div>
+            </div>
+
+            <div class="memo-actions">
+                <button class="btn-memo-start" id="btn-start-loop">
+                    🔄 Lancer la Mémorisation
+                </button>
+                <button class="btn-memo-stop" id="btn-stop-loop">
+                    ⏹️ Arrêter
+                </button>
+            </div>
+        </div>
+
+        <!-- Barre de contrôles simples d'affichage -->
+        <div class="controls-bar">
+            <button class="btn-control" id="btn-toggle-all-ref">
+                <span id="all-ref-icon">👁️</span> <span id="all-ref-label">Masquer toutes les références</span>
+            </button>
+            <button class="btn-control btn-pwa-install" id="btn-pwa-install-native">
+                📲 Installer l'App
+            </button>
+            <button class="btn-control" id="btn-ios-install-help" style="display: none; background-color: var(--accent-gold); color: #000; font-weight: 600;">
+                🍏 Installer sur iPhone
+            </button>
+            <span class="api-badge" id="api-status">API En ligne</span>
+        </div>
+
+        <!-- Conteneur des cartes de versets -->
+        <div class="verses-container" id="verses-container"></div>
+        
+        <!-- Note de bas de page avec Signature -->
+        <div class="footer-credits">
+            Application Coran Mémorisation réalisée par <strong>Kele</strong> • Concret et Sérieux
+        </div>
+    </div>
+
+    <!-- Modal d'aide à l'installation iOS -->
+    <div class="ios-install-modal" id="ios-install-modal">
+        <div class="ios-install-title">Installation sur iOS (iPhone)</div>
+        <div class="ios-install-text">
+            Pour installer l'application <strong>KELE</strong> sur votre iPhone :<br><br>
+            1. Ouvrez ce site sur le navigateur <strong>Safari</strong>.<br>
+            2. Appuyez sur le bouton de <strong>Partage</strong> 📤 au bas de l'écran.<br>
+            3. Faites défiler l'écran vers le bas et sélectionnez <strong>« Sur l'écran d'accueil »</strong> ➕.<br>
+            4. Confirmez en appuyant sur Ajouter.
+        </div>
+        <button class="ios-install-close" id="ios-install-close-btn">Compris</button>
+    </div>
+
+    <!-- Clavier Virtuel Unique Fixé -->
+    <div class="keyboard-container" id="keyboard-container"></div>
+
+    <script>
+        // ==========================================
+        // 1. GÉNÉRATEUR DYNAMIQUE DE MANIFESTE PWA (Single-file PWA)
+        // ==========================================
+        (function() {
+            // Icône au format SVG émeraude et or issu du design
+            const iconSvg = `
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+                    <rect width="512" height="512" rx="100" fill="#042c1c"/>
+                    <circle cx="256" cy="256" r="215" fill="none" stroke="#d97706" stroke-width="12"/>
+                    <path d="M256 70 a140 140 0 1 0 140 140 A140 140 0 0 1 256 70z" fill="#d97706"/>
+                    <path d="M130 360 q126 -40 252 0 L350 280 q-84 -30 -168 0z" fill="#f1f5f9" stroke="#d97706" stroke-width="6"/>
+                </svg>
+            `;
+            const iconBase64 = btoa(unescape(encodeURIComponent(iconSvg)));
+            const iconDataUrl = `data:image/svg+xml;base64,${iconBase64}`;
+
+            // Définition de l'objet Manifest
+            const manifestObj = {
+                "name": "Coran Mémorisation - KELE",
+                "short_name": "KELE",
+                "description": "Écrire, Mémoriser, Comprendre le Coran - Application par Kele",
+                "start_url": "./",
+                "display": "standalone",
+                "background_color": "#090d16",
+                "theme_color": "#064e3b",
+                "icons": [
+                    {
+                        "src": iconDataUrl,
+                        "sizes": "512x512",
+                        "type": "image/svg+xml",
+                        "purpose": "any"
+                    },
+                    {
+                        "src": iconDataUrl,
+                        "sizes": "192x192",
+                        "type": "image/svg+xml",
+                        "purpose": "any"
+                    }
+                ]
+            };
+
+            // Création d'un ObjectURL à partir d'un Blob JSON
+            const manifestString = JSON.stringify(manifestObj);
+            const blob = new Blob([manifestString], { type: 'application/manifest+json' });
+            const manifestUrl = URL.createObjectURL(blob);
+            document.getElementById('pwa-manifest').setAttribute('href', manifestUrl);
+        })();
+
+        // ==========================================
+        // 2. DÉCLARATION SÉCURISÉE DES FONCTIONS UTILES (Évite les ReferenceError mobiles)
+        // ==========================================
+        
+        // Convertisseur de chiffres en numérotation arabe (styles Coran)
+        window.toArabicNumerals = function(num) {
+            if (num === null || num === undefined) return '';
+            const arabicDigits = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
+            return num.toString().split('').map(digit => arabicDigits[digit] || digit).join('');
+        };
+
+        // Préparation de l'affichage des diacritiques coraniques et des petites lettres flottantes
+        window.getKeyDisplayLabel = function(char) {
+            const code = char.charCodeAt(0);
+            // On greffe le Tatweel (ـ) comme base horizontale au même niveau que la tête des lettres
+            if ((code >= 0x064B && code <= 0x0652) || 
+                code === 0x0670 || 
+                code === 0x0653 || 
+                code === 0x06E2 || 
+                code === 0x06E5 || 
+                code === 0x06E6 || 
+                code === 0x06E8 ||
+                (code >= 0x08F0 && code <= 0x08F2) || 
+                code === 0x08E8 ||
+                (code >= 0x06D6 && code <= 0x06DC)) { // Signes de Waqf/pause
+                return 'ـ' + char;
+            }
+            return char;
+        };
+
+        // ==========================================
+        // 3. DONNÉES ET CONFIGURATION
+        // ==========================================
+        
+        // Base de données des 114 sourates
+        const surahs = [
+            { id: 1, name: "Al-Fatihah", arabic: "الفاتحة", verses: 7 },
+            { id: 2, name: "Al-Baqarah", arabic: "البقرة", verses: 286 },
+            { id: 3, name: "Ali 'Imran", arabic: "آل عمران", verses: 200 },
+            { id: 4, name: "An-Nisa", arabic: "النساء", verses: 176 },
+            { id: 5, name: "Al-Ma'idah", arabic: "المائدة", verses: 120 },
+            { id: 6, name: "Al-An'am", arabic: "الأنعام", verses: 165 },
+            { id: 7, name: "Al-A'raf", arabic: "الأعراف", verses: 206 },
+            { id: 8, name: "Al-Anfal", arabic: "الأنفال", verses: 75 },
+            { id: 9, name: "At-Tawbah", arabic: "التوبة", verses: 129 },
+            { id: 10, name: "Yunus", arabic: "يونس", verses: 109 },
+            { id: 11, name: "Hud", arabic: "هود", verses: 123 },
+            { id: 12, name: "Yusuf", arabic: "يوسف", verses: 111 },
+            { id: 13, name: "Ar-Ra'd", arabic: "الرعد", verses: 43 },
+            { id: 14, name: "Ibrahim", arabic: "إبراهيم", verses: 52 },
+            { id: 15, name: "Al-Hijr", arabic: "الحجر", verses: 99 },
+            { id: 16, name: "An-Nahl", arabic: "النحل", verses: 128 },
+            { id: 17, name: "Al-Isra", arabic: "الإسراء", verses: 111 },
+            { id: 18, name: "Al-Kahf", arabic: "الكهf", verses: 110 },
+            { id: 19, name: "Maryam", arabic: "مريم", verses: 98 },
+            { id: 20, name: "Taha", arabic: "طه", verses: 135 },
+            { id: 21, name: "Al-Anbiya", arabic: "الأنبياء", verses: 112 },
+            { id: 22, name: "Al-Hajj", arabic: "الحج", verses: 78 },
+            { id: 23, name: "Al-Mu'minun", arabic: "المؤمنون", verses: 118 },
+            { id: 24, name: "An-Nur", arabic: "النور", verses: 64 },
+            { id: 25, name: "Al-Furqan", arabic: "الفرقان", verses: 77 },
+            { id: 26, name: "Ash-Shu'ara", arabic: "الشعراء", verses: 227 },
+            { id: 27, name: "An-Naml", arabic: "النمل", verses: 93 },
+            { id: 28, name: "Al-Qasas", arabic: "القصص", verses: 88 },
+            { id: 29, name: "Al-Ankabut", arabic: "العنكبوت", verses: 69 },
+            { id: 30, name: "Ar-Rum", arabic: "الروم", verses: 60 },
+            { id: 31, name: "Luqman", arabic: "لقمان", verses: 34 },
+            { id: 32, name: "As-Sajdah", arabic: "السجدة", verses: 30 },
+            { id: 33, name: "Al-Ahzab", arabic: "الأحزاب", verses: 73 },
+            { id: 34, name: "Saba", arabic: "سبأ", verses: 54 },
+            { id: 35, name: "Fatir", arabic: "فاطر", verses: 45 },
+            { id: 36, name: "Ya-Sin", arabic: "يس", verses: 83 },
+            { id: 37, name: "As-Saffat", arabic: "الصافات", verses: 182 },
+            { id: 38, name: "Sad", arabic: "ص", verses: 88 },
+            { id: 39, name: "Az-Zumar", arabic: "الزمر", verses: 75 },
+            { id: 40, name: "Ghafir", arabic: "غافر", verses: 85 },
+            { id: 41, name: "Fussilat", arabic: "فصلت", verses: 54 },
+            { id: 42, name: "Ash-Shura", arabic: "الشورى", verses: 53 },
+            { id: 43, name: "Az-Zukhruf", arabic: "الزخرف", verses: 89 },
+            { id: 44, name: "Ad-Dukhan", arabic: "الدخان", verses: 59 },
+            { id: 45, name: "Al-Jathiyah", arabic: "الجاثية", verses: 37 },
+            { id: 46, name: "Al-Ahqaf", arabic: "الأحقاف", verses: 35 },
+            { id: 47, name: "Muhammad", arabic: "محمد", verses: 38 },
+            { id: 48, name: "Al-Fath", arabic: "الفتح", verses: 29 },
+            { id: 49, name: "Al-Hujurat", arabic: "الحجرات", verses: 18 },
+            { id: 50, name: "Qaf", arabic: "ق", verses: 45 },
+            { id: 51, name: "Adh-Dhariyat", arabic: "الذاريات", verses: 60 },
+            { id: 52, name: "At-Tur", arabic: "الطور", verses: 49 },
+            { id: 53, name: "An-Najm", arabic: "النجم", verses: 62 },
+            { id: 54, name: "Al-Qamar", arabic: "القمر", verses: 55 },
+            { id: 55, name: "Ar-Rahman", arabic: "الرحمن", verses: 78 },
+            { id: 56, name: "Al-Waqi'ah", arabic: "الواقعة", verses: 96 },
+            { id: 57, name: "Al-Hadid", arabic: "الحديد", verses: 29 },
+            { id: 58, name: "Al-Mujadilah", arabic: "المجادلة", verses: 22 },
+            { id: 59, name: "Al-Hashr", arabic: "الحشر", verses: 24 },
+            { id: 60, name: "Al-Mumtahanah", arabic: "الممتحنة", verses: 13 },
+            { id: 61, name: "As-Saff", arabic: "الصف", verses: 14 },
+            { id: 62, name: "Al-Jumu'ah", arabic: "الجمعة", verses: 11 },
+            { id: 63, name: "Al-Munafiqun", arabic: "المنافقون", verses: 11 },
+            { id: 64, name: "At-Taghabun", arabic: "التغابن", verses: 18 },
+            { id: 65, name: "At-Talaq", arabic: "الطلاق", verses: 12 },
+            { id: 66, name: "At-Tahrim", arabic: "التحريم", verses: 12 },
+            { id: 67, name: "Al-Mulk", arabic: "الملك", verses: 30 },
+            { id: 68, name: "Al-Qalam", arabic: "القلم", verses: 52 },
+            { id: 69, name: "Al-Haqqah", arabic: "الحاقة", verses: 52 },
+            { id: 70, name: "Al-Ma'arij", arabic: "المعارج", verses: 44 },
+            { id: 71, name: "Nuh", arabic: "نوح", verses: 28 },
+            { id: 72, name: "Al-Jinn", arabic: "الجن", verses: 28 },
+            { id: 73, name: "Al-Muzzammil", arabic: "المزمل", verses: 20 },
+            { id: 74, name: "Al-Muddaththir", arabic: "المدثر", verses: 56 },
+            { id: 75, name: "Al-Qiyamah", arabic: "القيامة", verses: 40 },
+            { id: 76, name: "Al-Insan", arabic: "الإنسان", verses: 31 },
+            { id: 77, name: "Al-Mursalat", arabic: "المرسلات", verses: 50 },
+            { id: 78, name: "An-Naba", arabic: "النبأ", verses: 40 },
+            { id: 79, name: "An-Nazi'at", arabic: "النازعات", verses: 46 },
+            { id: 80, name: "'Abasa", arabic: "عبس", verses: 42 },
+            { id: 81, name: "At-Takwir", arabic: "التكوير", verses: 29 },
+            { id: 82, name: "Al-Infitar", arabic: "الانفطار", verses: 19 },
+            { id: 83, name: "Al-Mutaffifin", arabic: "المطففين", verses: 36 },
+            { id: 84, name: "Al-Inshiqaq", arabic: "الانشقاق", verses: 25 },
+            { id: 85, name: "Al-Buruj", arabic: "البروج", verses: 22 },
+            { id: 86, name: "At-Tariq", arabic: "الطارق", verses: 17 },
+            { id: 87, name: "Al-A'la", arabic: "الأعلى", verses: 19 },
+            { id: 88, name: "Al-Ghashiyah", arabic: "الغاشية", verses: 26 },
+            { id: 89, name: "Al-Fajr", arabic: "الفجر", verses: 30 },
+            { id: 90, name: "Al-Balad", arabic: "البلد", verses: 20 },
+            { id: 91, name: "Ash-Shams", arabic: "الشمس", verses: 15 },
+            { id: 92, name: "Al-Layl", arabic: "الليل", verses: 21 },
+            { id: 93, name: "Ad-Duha", arabic: "الضحى", verses: 11 },
+            { id: 94, name: "Ash-Sharh", arabic: "الشرح", verses: 8 },
+            { id: 95, name: "At-Tin", arabic: "التين", verses: 8 },
+            { id: 96, name: "Al-'Alaq", arabic: "العلق", verses: 19 },
+            { id: 97, name: "Al-Qadr", arabic: "القدر", verses: 5 },
+            { id: 98, name: "Al-Bayyinah", arabic: "البينة", verses: 8 },
+            { id: 99, name: "Az-Zalzalah", arabic: "الزلزلة", verses: 8 },
+            { id: 100, name: "Al-'Adiyat", arabic: "العاديات", verses: 11 },
+            { id: 101, name: "Al-Qari'ah", arabic: "القارعة", verses: 11 },
+            { id: 102, name: "At-Takathur", arabic: "التكاثر", verses: 8 },
+            { id: 103, name: "Al-'Asr", arabic: "العصر", verses: 3 },
+            { id: 104, name: "Al-Humazah", arabic: "الهمزة", verses: 9 },
+            { id: 105, name: "Al-Fil", arabic: "الفيل", verses: 5 },
+            { id: 106, name: "Quraysh", arabic: "قريش", verses: 4 },
+            { id: 107, name: "Al-Ma'un", arabic: "الماعون", verses: 7 },
+            { id: 108, name: "Al-Kawthar", arabic: "الكوثر", verses: 3 },
+            { id: 109, name: "Al-Kafirun", arabic: "الكافرon", verses: 6 },
+            { id: 110, name: "An-Nasr", arabic: "النصر", verses: 3 },
+            { id: 111, name: "Al-Masad", arabic: "المسد", verses: 5 },
+            { id: 112, name: "Al-Ikhlas", arabic: "الإخلاص", verses: 4 },
+            { id: 113, name: "Al-Falaq", arabic: "الفلق", verses: 5 },
+            { id: 114, name: "An-Nas", arabic: "الناس", verses: 6 }
+        ];
+
+        // Layouts des claviers virtuels
+        const ARABIC_ROWS = [
+            ["َ", "ُ", "ِ", "ً", "ٌ", "ٍ", "ّ", "ْ", "ٰ", "ٓ", "ࣰ", "ࣱ", "ࣲ", "ࣨ"],
+            ["ض", "ص", "ث", "ق", "ف", "غ", "ع", "ه", "خ", "ح", "ج", "د"],
+            ["ش", "س", "ي", "ب", "ل", "ا", "ت", "ن", "م", "ك", "ط", "ذ"],
+            ["ئ", "ء", "ؤ", "ر", "ى", "ة", "و", "ز", "ظ", "أ", "إ", "آ"], // Zayn (ز) parfaitement placé
+            ["ٱ", "ۖ", "ۗ", "ۚ", "ۘ", "ۙ", "ۛ", "ۜ", "ۢ", "ۨ", "۩", "۝", "۞", "ۥ", "ۦ"]
+        ];
+
+        const FRENCH_ABC_ROWS = [
+            ["a", "z", "e", "r", "t", "y", "u", "i", "o", "p"],
+            ["q", "s", "d", "f", "g", "h", "j", "k", "l", "m"],
+            ["w", "x", "c", "v", "b", "n", "é", "è", "à", "ç"],
+            ["ù", "ê", "ë", "î", "ï", "ô", "œ", "'", ",", "."]
+        ];
+
+        const FRENCH_SHIFT_ROWS = [
+            ["A", "Z", "E", "R", "T", "Y", "U", "I", "O", "P"],
+            ["Q", "S", "D", "F", "G", "H", "J", "K", "L", "M"],
+            ["W", "X", "C", "V", "B", "N", "É", "È", "À", "Ç"],
+            ["Ù", "Ê", "Ë", "Î", "Ï", "Ô", "Œ", "?", "!", "-"]
+        ];
+
+        const FRENCH_NUM_ROWS = [
+            ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
+            ["@", "#", "$", "%", "&", "*", "(", ")", "_", "+"],
+            ["=", "/", "\\", "[", "]", "{", "}", "<", ">", "|"],
+            ["\"", "`", "~", "^", "€", "£", "¥", "§", ":", ";"]
+        ];
+
+        // ==========================================
+        // 4. ÉTATS GLOBAUX DE L'APPLICATION
+        // ==========================================
+        let activeSurahId = 1;
+        let activeInput = null;
+        let currentLang = 'ar';
+        let frenchLayoutState = 'abc';
+        let saveTimeout;
+        let showAllReferences = true;
+        let activeApiEditions = null; // Contiendra les données de la sourate active
+
+        // Lecteur audio global unique
+        const audioReciter = new Audio();
+        let currentActivePlayBtn = null;
+
+        // États du gestionnaire de boucle de mémorisation
+        let loopingMode = false;
+        let currentLoopAyahIndex = 0;
+        let ayahRepCount = 0;
+        let rangeRepCount = 0;
+        let loopStartVal = 1;
+        let loopEndVal = 1;
+        let loopVerseMax = 1;
+        let loopRangeMax = 1;
+
+        // Détection d'installation PWA
+        let deferredPrompt = null;
+
+        // ==========================================
+        // 5. CYCLES ET ÉVÉNEMENTS DU DOCUMENT
+        // ==========================================
+        document.addEventListener('DOMContentLoaded', () => {
+            renderSurahList();
+            selectSurah(1);
+            renderKeyboard();
+
+            document.getElementById('menu-btn').addEventListener('click', openSidebar);
+            document.getElementById('close-sidebar-btn').addEventListener('click', closeSidebar);
+            document.getElementById('sidebar-overlay').addEventListener('click', closeSidebar);
+
+            document.getElementById('surah-search').addEventListener('input', (e) => {
+                renderSurahList(e.target.value);
+            });
+
+            document.getElementById('btn-toggle-all-ref').addEventListener('click', toggleAllReferences);
+
+            // Gestion de la vitesse de lecture
+            const speedSlider = document.getElementById('audio-speed');
+            speedSlider.addEventListener('input', (e) => {
+                const speed = parseFloat(e.target.value);
+                document.getElementById('speed-display').textContent = speed.toFixed(2) + 'x';
+                document.getElementById('speed-indicator-badge').textContent = speed.toFixed(2) + 'x';
+                
+                // Appliquer immédiatement sur l'audio en cours
+                audioReciter.playbackRate = speed;
+            });
+
+            // Boutons de la console de mémorisation
+            document.getElementById('btn-start-loop').addEventListener('click', startMemorisationLoop);
+            document.getElementById('btn-stop-loop').addEventListener('click', stopMemorisationLoop);
+
+            // Événement d'installation PWA
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                // Afficher le bouton d'installation sur Android/Chrome
+                const pwaBtn = document.getElementById('btn-pwa-install-native');
+                if (pwaBtn) pwaBtn.style.display = 'inline-flex';
+            });
+
+            document.getElementById('btn-pwa-install-native').addEventListener('click', async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    if (outcome === 'accepted') {
+                        console.log('Utilisateur a accepté l\'installation');
+                    }
+                    deferredPrompt = null;
+                    document.getElementById('btn-pwa-install-native').style.display = 'none';
+                }
+            });
+
+            // Gestion iPhone/iOS (Détection et affichage d'aide)
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+            if (isIOS && !isStandalone) {
+                const iosBtn = document.getElementById('btn-ios-install-help');
+                if (iosBtn) iosBtn.style.display = 'inline-flex';
+            }
+
+            document.getElementById('btn-ios-install-help').addEventListener('click', () => {
+                document.getElementById('ios-install-modal').classList.add('visible');
+            });
+
+            document.getElementById('ios-install-close-btn').addEventListener('click', () => {
+                document.getElementById('ios-install-modal').classList.remove('visible');
+            });
+
+            // Enregistrer le Service Worker pour le fonctionnement hors-ligne (PWA)
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('Service Worker enregistré !', reg))
+                .catch(err => console.warn('Service Worker non enregistré (Mode PWA limité sans sw.js local) :', err));
+            }
+
+            // Gérer le changement automatique de clavier lors du focus
+            document.addEventListener('focusin', (e) => {
+                if (e.target.tagName === 'TEXTAREA') {
+                    activeInput = e.target;
+                    const lang = e.target.getAttribute('data-lang');
+                    if (lang && lang !== currentLang) {
+                        currentLang = lang;
+                        renderKeyboard();
+                    }
+                    setTimeout(() => {
+                        e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 150);
+                }
+            });
+
+            // Auto-expansion des textareas en cours d'écriture
+            document.getElementById('verses-container').addEventListener('input', (e) => {
+                if (e.target.tagName === 'TEXTAREA') {
+                    autoResizeTextarea(e.target);
+                    debounceSave();
+                }
+            });
+
+            // Intercepter la fin de lecture audio pour continuer la boucle de mémorisation
+            audioReciter.onended = () => {
+                if (loopingMode) {
+                    playNextInLoop();
+                } else {
+                    if (currentActivePlayBtn) {
+                        currentActivePlayBtn.textContent = '▶️ Écouter';
+                        const parentCard = currentActivePlayBtn.closest('.verse-card');
+                        if (parentCard) parentCard.classList.remove('playing');
+                        currentActivePlayBtn = null;
+                    }
+                }
+            };
+        });
+
+        // ==========================================
+        // 6. FONCTIONS MÉTIER ET CONTROLEURS
+        // ==========================================
+
+        // Fonction pour ajuster la hauteur des textareas dynamiquement
+        function autoResizeTextarea(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = (textarea.scrollHeight + 2) + 'px';
+        }
+
+        // Fonction pour ré-ajuster toutes les textareas visibles
+        function resizeAllTextareas() {
+            const textareas = document.querySelectorAll('.arabic-input, .french-input');
+            textareas.forEach(textarea => {
+                autoResizeTextarea(textarea);
+            });
+        }
+
+        function openSidebar() {
+            document.getElementById('sidebar').classList.add('open');
+            document.getElementById('sidebar-overlay').classList.add('visible');
+        }
+
+        function closeSidebar() {
+            document.getElementById('sidebar').classList.remove('open');
+            document.getElementById('sidebar-overlay').classList.remove('visible');
+        }
+
+        function renderSurahList(filter = '') {
+            const listContainer = document.getElementById('surah-list');
+            listContainer.innerHTML = '';
+            const normalizedFilter = filter.toLowerCase().trim();
+
+            const filtered = surahs.filter(s => {
+                return s.id.toString().includes(normalizedFilter) || 
+                       s.name.toLowerCase().includes(normalizedFilter) || 
+                       s.arabic.includes(normalizedFilter);
+            });
+
+            filtered.forEach(s => {
+                const item = document.createElement('div');
+                item.className = 'surah-item';
+                if (s.id === activeSurahId) item.classList.add('active');
+                
+                item.innerHTML = `
+                    <div class="surah-item-num">${s.id}</div>
+                    <div class="surah-item-info">
+                        <span class="surah-item-name">${s.name}</span>
+                        <span class="surah-item-meta">${s.verses} versets</span>
+                    </div>
+                    <div class="surah-item-arabic">${s.arabic}</div>
+                `;
+                
+                item.addEventListener('click', () => {
+                    selectSurah(s.id);
+                });
+                listContainer.appendChild(item);
+            });
+        }
+
+        // TÉLÉCHARGEMENT ET STOCKAGE LOCAL DES SOURATES DANS LE NAVIGATEUR
+        async function fetchQuranSurahData(id) {
+            const cacheKey = `quran_memorisation_api_cache_surah_${id}`;
+            
+            // 1. Essai de chargement depuis le cache du navigateur
+            const cachedData = localStorage.getItem(cacheKey);
+            if (cachedData) {
+                try {
+                    return JSON.parse(cachedData);
+                } catch (e) {
+                    console.error("Erreur de parsing du cache local, re-téléchargement...", e);
+                }
+            }
+
+            // 2. Téléchargement depuis l'API si absent ou corrompu
+            try {
+                const url = `https://api.alquran.cloud/v1/surah/${id}/editions/quran-uthmani,fr.hamidullah,ar.husary`;
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Erreur réseau');
+                const result = await response.json();
+                
+                if (result.code === 200 && result.data.length === 3) {
+                    const surahData = {
+                        arabicTextEd: result.data[0].ayahs,
+                        frenchTranslationEd: result.data[1].ayahs,
+                        audioEd: result.data[2].ayahs
+                    };
+                    
+                    // Stocker les données de la sourate téléchargée dans le navigateur (LocalStorage)
+                    localStorage.setItem(cacheKey, JSON.stringify(surahData));
+                    return surahData;
+                }
+                throw new Error('Données API non valides');
+            } catch (error) {
+                console.warn("API indisponible et aucun cache local trouvé :", error);
+                return null;
+            }
+        }
+
+        // Gérer le chargement et la génération de l'éditeur de sourate
+        async function selectSurah(id) {
+            stopMemorisationLoop();
+
+            activeSurahId = id;
+            const surah = surahs.find(s => s.id === id);
+            if (!surah) return;
+
+            document.getElementById('current-surah-title').textContent = `Sourate ${surah.name}`;
+            document.getElementById('current-surah-meta').textContent = `${surah.arabic} • ${surah.verses} Versets`;
+
+            // Configurer les bornes dynamiques de la console de mémorisation selon le nombre de versets de la sourate
+            const fromInput = document.getElementById('loop-from');
+            const toInput = document.getElementById('loop-to');
+            fromInput.max = surah.verses;
+            toInput.max = surah.verses;
+            fromInput.value = 1;
+            toInput.value = surah.verses;
+
+            const container = document.getElementById('verses-container');
+            container.innerHTML = `
+                <div class="loading-container">
+                    <div class="spinner"></div>
+                    <span>Chargement / Téléchargement des textes de l'API (Al-Hussary)...</span>
+                </div>
+            `;
+
+            // Récupération des données (API ou Cache stocké dans le navigateur)
+            const apiData = await fetchQuranSurahData(id);
+            activeApiEditions = apiData; // Stocker dans l'état global
+            
+            const badge = document.getElementById('api-status');
+            if (apiData) {
+                // Si l'élément provient du localStorage, c'est indiqué de manière transparente
+                const isCached = localStorage.getItem(`quran_memorisation_api_cache_surah_${id}`) !== null;
+                badge.textContent = isCached ? "Stocké localement (Hors-ligne)" : "Téléchargé avec succès";
+                badge.className = "api-badge online";
+            } else {
+                badge.textContent = "Aucun cache (Mode Hors-ligne)";
+                badge.className = "api-badge offline";
+            }
+
+            container.innerHTML = '';
+
+            const savedData = loadSurahData(id) || { verses: {} };
+
+            for (let i = 1; i <= surah.verses; i++) {
+                const verseData = savedData.verses[i] || { ar: '', fr: '' };
+                const card = document.createElement('div');
+                card.className = 'verse-card';
+                card.setAttribute('data-verse-index', i);
+
+                const hasApi = apiData && apiData.arabicTextEd[i-1] && apiData.frenchTranslationEd[i-1];
+                const arabicRef = hasApi ? apiData.arabicTextEd[i-1].text : '';
+                const frenchRef = hasApi ? apiData.frenchTranslationEd[i-1].text : '';
+                const audioSrc = hasApi ? apiData.audioEd[i-1].audio : '';
+
+                card.innerHTML = `
+                    <div class="verse-header">
+                        <div class="verse-title">
+                            <span class="ayah-frame">${i}</span>
+                            <span>Verset ${i} / ${window.toArabicNumerals(i)}</span>
+                        </div>
+                        <div class="verse-actions">
+                            ${hasApi ? `
+                                <button class="btn-action-small" onclick="playVerseAudio('${audioSrc}', this)">
+                                    ▶️ Écouter
+                                </button>
+                                <button class="btn-action-small" onclick="toggleIndividualReference(this)">
+                                    👁️
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                    
+                    ${hasApi ? `
+                        <div class="reference-box ${showAllReferences ? '' : 'hidden'}">
+                            <div class="ref-arabic">${arabicRef}</div>
+                            <div class="ref-french">${frenchRef}</div>
+                        </div>
+                    ` : ''}
+
+                    <div class="arabic-container">
+                        <span class="input-label">Coran (Arabe)</span>
+                        <textarea class="arabic-input" 
+                                  placeholder="اكتب الآية الكريمة هنا..." 
+                                  inputmode="none" 
+                                  data-lang="ar">${verseData.ar}</textarea>
+                    </div>
+                    <div class="french-container">
+                        <span class="input-label">Traduction (Français)</span>
+                        <textarea class="french-input" 
+                                  placeholder="Saisissez la traduction française..." 
+                                  inputmode="none" 
+                                  data-lang="fr">${verseData.fr}</textarea>
+                    </div>
+                `;
+                container.appendChild(card);
+            }
+
+            setTimeout(() => {
+                resizeAllTextareas();
+            }, 50);
+
+            closeSidebar();
+            renderSurahList(document.getElementById('surah-search').value);
+        }
+
+        // Bascule globale d'affichage des versets de référence
+        function toggleAllReferences() {
+            showAllReferences = !showAllReferences;
+            const refBoxes = document.querySelectorAll('.reference-box');
+            
+            refBoxes.forEach(box => {
+                if (showAllReferences) {
+                    box.classList.remove('hidden');
+                } else {
+                    box.classList.add('hidden');
+                }
+            });
+
+            const icon = document.getElementById('all-ref-icon');
+            const label = document.getElementById('all-ref-label');
+            if (showAllReferences) {
+                icon.textContent = '👁️';
+                label.textContent = 'Masquer toutes les références';
+            } else {
+                icon.textContent = '🙈';
+                label.textContent = 'Afficher toutes les références';
+            }
+        }
+
+        // Bascule individuelle de la boîte de référence d'une carte spécifique
+        function toggleIndividualReference(btn) {
+            const card = btn.closest('.verse-card');
+            const refBox = card.querySelector('.reference-box');
+            if (refBox) {
+                refBox.classList.toggle('hidden');
+            }
+        }
+
+        // Répétitions manuelles unitaires
+        function playVerseAudio(url, btn) {
+            if (loopingMode) {
+                stopMemorisationLoop();
+            }
+
+            const card = btn.closest('.verse-card');
+            const speed = parseFloat(document.getElementById('audio-speed').value) || 1;
+
+            if (audioReciter.src === url) {
+                if (audioReciter.paused) {
+                    audioReciter.playbackRate = speed;
+                    audioReciter.play();
+                    btn.textContent = '⏸️ Pause';
+                    card.classList.add('playing');
+                } else {
+                    audioReciter.pause();
+                    btn.textContent = '▶️ Écouter';
+                    card.classList.remove('playing');
+                }
+                return;
+            }
+
+            if (currentActivePlayBtn) {
+                currentActivePlayBtn.textContent = '▶️ Écouter';
+                const playingCard = currentActivePlayBtn.closest('.verse-card');
+                if (playingCard) playingCard.classList.remove('playing');
+            }
+
+            audioReciter.src = url;
+            audioReciter.defaultPlaybackRate = speed;
+            audioReciter.playbackRate = speed;
+            currentActivePlayBtn = btn;
+            btn.textContent = '⏳ Chargement';
+            
+            audioReciter.play()
+                .then(() => {
+                    btn.textContent = '⏸️ Pause';
+                    card.classList.add('playing');
+                })
+                .catch(err => {
+                    console.error("Échec de lecture audio :", err);
+                    btn.textContent = '❌ Erreur';
+                });
+        }
+
+        // CONSOLE DE MÉMORISATION : LOGIQUE DE BOUCLE, RÉPÉTITIONS ET VITESSE
+        function startMemorisationLoop() {
+            if (!activeApiEditions) {
+                alert("Veuillez charger d'abord une sourate avec l'API ou le stockage local avant de lancer la boucle de mémorisation.");
+                return;
+            }
+
+            // Chargement des paramètres saisis
+            loopStartVal = parseInt(document.getElementById('loop-from').value) || 1;
+            loopEndVal = parseInt(document.getElementById('loop-to').value) || 1;
+            loopVerseMax = parseInt(document.getElementById('loop-verse-rep').value) || 1;
+            loopRangeMax = parseInt(document.getElementById('loop-range-rep').value) || 1;
+            const speed = parseFloat(document.getElementById('audio-speed').value) || 1;
+
+            const maxV = activeApiEditions.arabicTextEd.length;
+
+            // Corrections de sécurité sur les indices
+            if (loopStartVal < 1) loopStartVal = 1;
+            if (loopEndVal > maxV) loopEndVal = maxV;
+            if (loopStartVal > loopEndVal) {
+                const temp = loopStartVal;
+                loopStartVal = loopEndVal;
+                loopEndVal = temp;
+                document.getElementById('loop-from').value = loopStartVal;
+                document.getElementById('loop-to').value = loopEndVal;
+            }
+
+            loopingMode = true;
+            currentLoopAyahIndex = loopStartVal - 1; // Index 0
+            ayahRepCount = loopVerseMax;
+            rangeRepCount = loopRangeMax;
+
+            // Appliquer la vitesse sur l'audio global
+            audioReciter.defaultPlaybackRate = speed;
+            audioReciter.playbackRate = speed;
+
+            // Mise à jour visuelle du bouton principal
+            const startBtn = document.getElementById('btn-start-loop');
+            startBtn.textContent = '🔄 Boucle Active...';
+            startBtn.style.backgroundColor = 'var(--accent-gold)';
+            startBtn.style.color = '#000';
+
+            playNextInLoop();
+        }
+
+        function stopMemorisationLoop() {
+            loopingMode = false;
+            audioReciter.pause();
+            audioReciter.src = '';
+
+            // Retirer tous les effets visuels de lecture
+            document.querySelectorAll('.verse-card').forEach(c => c.classList.remove('playing'));
+            if (currentActivePlayBtn) {
+                currentActivePlayBtn.textContent = '▶️ Écouter';
+                currentActivePlayBtn = null;
+            }
+
+            const startBtn = document.getElementById('btn-start-loop');
+            startBtn.textContent = '🔄 Lancer la Mémorisation';
+            startBtn.style.backgroundColor = 'var(--primary-light)';
+            startBtn.style.color = '#fff';
+        }
+
+        function playNextInLoop() {
+            if (!loopingMode || !activeApiEditions) return;
+
+            const speed = parseFloat(document.getElementById('audio-speed').value) || 1;
+            audioReciter.defaultPlaybackRate = speed;
+            audioReciter.playbackRate = speed;
+
+            // Étape 1 : Si on a dépassé le dernier verset de l'intervalle
+            if (currentLoopAyahIndex > (loopEndVal - 1)) {
+                rangeRepCount--;
+                if (rangeRepCount > 0) {
+                    // On recommence la boucle complète de l'intervalle
+                    currentLoopAyahIndex = loopStartVal - 1;
+                    ayahRepCount = loopVerseMax;
+                    playNextInLoop();
+                } else {
+                    // Toutes les répétitions de l'intervalle sont terminées
+                    stopMemorisationLoop();
+                }
+                return;
+            }
+
+            // Étape 2 : Vérifier les répétitions du verset actuel
+            if (ayahRepCount > 0) {
+                ayahRepCount--;
+                const ayahData = activeApiEditions.audioEd[currentLoopAyahIndex];
+                if (!ayahData) {
+                    stopMemorisationLoop();
+                    return;
+                }
+
+                // Mettre en évidence visuellement la carte active
+                document.querySelectorAll('.verse-card').forEach(c => c.classList.remove('playing'));
+                const activeCard = document.querySelector(`.verse-card[data-verse-index="${currentLoopAyahIndex + 1}"]`);
+                if (activeCard) {
+                    activeCard.classList.add('playing');
+                    activeCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+
+                audioReciter.src = ayahData.audio;
+                audioReciter.playbackRate = speed; // Forcer la vitesse à chaque changement de piste
+                
+                audioReciter.play().catch(err => {
+                    console.error("Erreur de lecture lors de la mémorisation automatique :", err);
+                    // Passer au suivant après un bref délai en cas de blocage réseau
+                    setTimeout(playNextInLoop, 1500);
+                });
+            } else {
+                // Répétitions terminées pour ce verset, on passe au verset suivant dans l'intervalle
+                currentLoopAyahIndex++;
+                ayahRepCount = loopVerseMax;
+                playNextInLoop();
+            }
+        }
+
+        // Sauvegarde de l'écriture de l'utilisateur
+        function debounceSave() {
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => {
+                if (!activeSurahId) return;
+                const data = { verses: {} };
+                const cards = document.querySelectorAll('.verse-card');
+                
+                cards.forEach(card => {
+                    const idx = card.getAttribute('data-verse-index');
+                    const arVal = card.querySelector('.arabic-input').value;
+                    const frVal = card.querySelector('.french-input').value;
+                    data.verses[idx] = { ar: arVal, fr: frVal };
+                });
+
+                localStorage.setItem(`quran_writer_v1_surah_${activeSurahId}`, JSON.stringify(data));
+                
+                const ind = document.getElementById('save-indicator');
+                ind.classList.add('visible');
+                setTimeout(() => ind.classList.remove('visible'), 1500);
+            }, 600);
+        }
+
+        function loadSurahData(id) {
+            const data = localStorage.getItem(`quran_writer_v1_surah_${id}`);
+            return data ? JSON.parse(data) : null;
+        }
+
+        // GESTION DU CLAVIER VIRTUEL
+        function toggleLanguage() {
+            currentLang = (currentLang === 'ar') ? 'fr' : 'ar';
+            renderKeyboard();
+            if (activeInput) activeInput.focus();
+        }
+
+        function renderKeyboard() {
+            const container = document.getElementById('keyboard-container');
+            container.innerHTML = '';
+
+            if (currentLang === 'ar') {
+                renderArabicKeyboard(container);
+            } else {
+                renderFrenchKeyboard(container);
+            }
+        }
+
+        function renderArabicKeyboard(container) {
+            ARABIC_ROWS.forEach(row => {
+                const rowEl = document.createElement('div');
+                rowEl.className = 'keyboard-row';
+                
+                row.forEach(char => {
+                    const btn = document.createElement('button');
+                    btn.className = 'keyboard-key arabic-key';
+                    btn.textContent = window.getKeyDisplayLabel(char);
+                    
+                    btn.addEventListener('pointerdown', (e) => {
+                        e.preventDefault();
+                        insertText(char);
+                    });
+                    rowEl.appendChild(btn);
+                });
+                container.appendChild(rowEl);
+            });
+
+            const controlRow = document.createElement('div');
+            controlRow.className = 'keyboard-row';
+
+            const globeBtn = document.createElement('button');
+            globeBtn.className = 'keyboard-key key-action';
+            globeBtn.innerHTML = '🌐 FR';
+            globeBtn.addEventListener('pointerdown', (e) => {
+                e.preventDefault();
+                toggleLanguage();
+            });
+
+            const spaceBtn = document.createElement('button');
+            spaceBtn.className = 'keyboard-key key-space';
+            spaceBtn.textContent = 'Espace';
+            spaceBtn.addEventListener('pointerdown', (e) => {
+                e.preventDefault();
+                insertText(' ');
+            });
+
+            const enterBtn = document.createElement('button');
+            enterBtn.className = 'keyboard-key key-action key-enter';
+            enterBtn.textContent = 'Entrée';
+            enterBtn.addEventListener('pointerdown', (e) => {
+                e.preventDefault();
+                insertText('\n');
+            });
+
+            const backspaceBtn = document.createElement('button');
+            backspaceBtn.className = 'keyboard-key key-action';
+            backspaceBtn.textContent = '⌫';
+            backspaceBtn.addEventListener('pointerdown', (e) => {
+                e.preventDefault();
+                deleteText();
+            });
+
+            controlRow.appendChild(globeBtn);
+            controlRow.appendChild(spaceBtn);
+            controlRow.appendChild(enterBtn);
+            controlRow.appendChild(backspaceBtn);
+            container.appendChild(controlRow);
+        }
+
+        function renderFrenchKeyboard(container) {
+            let activeLayout = [];
+            if (frenchLayoutState === 'abc') activeLayout = FRENCH_ABC_ROWS;
+            else if (frenchLayoutState === 'shift') activeLayout = FRENCH_SHIFT_ROWS;
+            else activeLayout = FRENCH_NUM_ROWS;
+
+            activeLayout.forEach(row => {
+                const rowEl = document.createElement('div');
+                rowEl.className = 'keyboard-row';
+                
+                row.forEach(char => {
+                    const btn = document.createElement('button');
+                    btn.className = 'keyboard-key';
+                    btn.textContent = char;
+                    
+                    btn.addEventListener('pointerdown', (e) => {
+                        e.preventDefault();
+                        insertText(char);
+                        
+                        if (frenchLayoutState === 'shift') {
+                            frenchLayoutState = 'abc';
+                            renderKeyboard();
+                        }
+                    });
+                    rowEl.appendChild(btn);
+                });
+                container.appendChild(rowEl);
+            });
+
+            const controlRow = document.createElement('div');
+            controlRow.className = 'keyboard-row';
+
+            const numBtn = document.createElement('button');
+            numBtn.className = 'keyboard-key key-action';
+            numBtn.textContent = (frenchLayoutState === 'num') ? 'ABC' : '123';
+            numBtn.addEventListener('pointerdown', (e) => {
+                e.preventDefault();
+                frenchLayoutState = (frenchLayoutState === 'num') ? 'abc' : 'num';
+                renderKeyboard();
+            });
+
+            const shiftBtn = document.createElement('button');
+            shiftBtn.className = 'keyboard-key key-action';
+            shiftBtn.textContent = (frenchLayoutState === 'shift') ? '⬆' : '⇧';
+            if (frenchLayoutState === 'shift') {
+                shiftBtn.style.color = 'var(--accent-gold)';
+            }
+            shiftBtn.addEventListener('pointerdown', (e) => {
+                e.preventDefault();
+                if (frenchLayoutState === 'abc') frenchLayoutState = 'shift';
+                else if (frenchLayoutState === 'shift') frenchLayoutState = 'abc';
+                renderKeyboard();
+            });
+
+            const globeBtn = document.createElement('button');
+            globeBtn.className = 'keyboard-key key-action';
+            globeBtn.innerHTML = '🌐 AR';
+            globeBtn.addEventListener('pointerdown', (e) => {
+                e.preventDefault();
+                toggleLanguage();
+            });
+
+            const spaceBtn = document.createElement('button');
+            spaceBtn.className = 'keyboard-key key-space';
+            spaceBtn.textContent = 'Espace';
+            spaceBtn.addEventListener('pointerdown', (e) => {
+                e.preventDefault();
+                insertText(' ');
+            });
+
+            const enterBtn = document.createElement('button');
+            enterBtn.className = 'keyboard-key key-action key-enter';
+            enterBtn.textContent = 'Entrée';
+            enterBtn.addEventListener('pointerdown', (e) => {
+                e.preventDefault();
+                insertText('\n');
+            });
+
+            const backspaceBtn = document.createElement('button');
+            backspaceBtn.className = 'keyboard-key key-action';
+            backspaceBtn.textContent = '⌫';
+            backspaceBtn.addEventListener('pointerdown', (e) => {
+                e.preventDefault();
+                deleteText();
+            });
+
+            controlRow.appendChild(numBtn);
+            controlRow.appendChild(shiftBtn);
+            controlRow.appendChild(globeBtn);
+            controlRow.appendChild(spaceBtn);
+            controlRow.appendChild(enterBtn);
+            controlRow.appendChild(backspaceBtn);
+            container.appendChild(controlRow);
+        }
+
+        function insertText(char) {
+            if (!activeInput) return;
+
+            const start = activeInput.selectionStart;
+            const end = activeInput.selectionEnd;
+            const text = activeInput.value;
+
+            activeInput.value = text.substring(0, start) + char + text.substring(end);
+            
+            const newCursorPos = start + char.length;
+            activeInput.setSelectionRange(newCursorPos, newCursorPos);
+            
+            activeInput.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+
+        function deleteText() {
+            if (!activeInput) return;
+
+            const start = activeInput.selectionStart;
+            const end = activeInput.selectionEnd;
+            const text = activeInput.value;
+
+            if (start !== end) {
+                activeInput.value = text.substring(0, start) + text.substring(end);
+                activeInput.setSelectionRange(start, start);
+            } else if (start > 0) {
+                activeInput.value = text.substring(0, start - 1) + text.substring(end);
+                activeInput.setSelectionRange(start - 1, start - 1);
+            }
+            
+            activeInput.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+    </script>
+</body>
+</html>
